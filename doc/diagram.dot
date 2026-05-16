@@ -1,0 +1,152 @@
+digraph LexerDFA {
+    // Configurações gerais do diagrama
+    rankdir=LR;
+    fontname="Helvetica,Arial,sans-serif";
+    node [fontname="Helvetica,Arial,sans-serif"];
+    edge [fontname="Helvetica,Arial,sans-serif", fontsize=10];
+
+    // Nó de início invisível para apontar para o estado inicial
+    start [shape=point];
+
+    // ==========================================
+    // ESTADOS FINAIS (TIPO DE TOKENS VALIDOS)
+    // ==========================================
+    node [shape=doublecircle, style=filled, fillcolor=lightblue];
+    
+    ID        [label="ID"];
+    INTCON    [label="INTCON"];
+    REALCON   [label="REALCON"];
+    CHARCON   [label="CHARCON"];
+    STRINGCON [label="STRINGCON"];
+    
+    // Operadores e Pontuação
+    ASSIGN  [label="ASSIGN\n="];
+    EQ      [label="EQ\n=="];
+    NOT     [label="NOT\n!"];
+    NEQ     [label="NEQ\n!="];
+    LT      [label="LT\n<"];
+    LE      [label="LE\n<="];
+    GT      [label="GT\n>"];
+    GE      [label="GE\n>="];
+    PLUS    [label="PLUS\n+"];
+    MINUS   [label="MINUS\n-"];
+    STAR    [label="STAR\n*"];
+    DIV     [label="DIV\n/"];
+    
+    AMP     [label="REF/AMP\n&"];
+    AND     [label="AND\n&&"];
+    OR      [label="OR\n||"];
+    
+    LPAREN  [label="LPAREN\n("];
+    RPAREN  [label="RPAREN\n)"];
+    LBRACK  [label="LBRACK\n["];
+    RBRACK  [label="RBRACK\n]"];
+    LBRACE  [label="LBRACE\n{"];
+    RBRACE  [label="RBRACE\n}"];
+    COMMA   [label="COMMA\n,"];
+    
+    COMMENT [label="COMMENT\n(Ignorar)", fillcolor=lightgrey];
+
+    // ==========================================
+    // ESTADOS INTERMEDIÁRIOS (NÃO FINAIS)
+    // ==========================================
+    node [shape=circle, style=solid, fillcolor=white];
+    
+    q0 [label="q0\n(Start)"];
+    
+    q_id_uscore [label="q_id_uscore"];
+    
+    q_real_dot [label="q_dot"];
+    
+    q_char_open [label="q_char_open"];
+    q_char_esc  [label="q_char_esc"];
+    q_char_wait [label="q_char_wait"];
+    
+    q_str_open [label="q_str_open"];
+    
+    q_pipe_open [label="q_pipe"];
+    q_slash_open [label="q_slash"];
+    q_comment_body [label="q_comment_body"];
+
+    // ==========================================
+    // TRANSIÇÕES
+    // ==========================================
+    
+    start -> q0;
+
+    // Espaços em branco (Loop no início)
+    q0 -> q0 [label="' ', \\t, \\n, \\r"];
+
+    // 1. Identificadores (ID)
+    // id ::= {_} letra { letra | digito | _ }
+    q0 -> q_id_uscore [label="_"];
+    q_id_uscore -> q_id_uscore [label="_"];
+    q_id_uscore -> ID [label="letra"];
+    q0 -> ID [label="letra"];
+    ID -> ID [label="letra | digito | _"];
+
+    // 2. Números (INTCON e REALCON)
+    // intcon ::= digito { digito }
+    // realcon ::= intcon.intcon
+    q0 -> INTCON [label="digito"];
+    INTCON -> INTCON [label="digito"];
+    INTCON -> q_real_dot [label="."];
+    q_real_dot -> REALCON [label="digito"];
+    REALCON -> REALCON [label="digito"];
+
+    // 3. Caracteres (CHARCON)
+    // 'ch' | '\n' | '\0'
+    q0 -> q_char_open [label="' (apóstrofo)"];
+    q_char_open -> q_char_esc [label="\\ (barra inv.)"];
+    q_char_esc -> q_char_wait [label="n | 0"];
+    q_char_open -> q_char_wait [label="isprint() exceto \\ e '"];
+    q_char_wait -> CHARCON [label="' (apóstrofo)"];
+
+    // 4. Strings (STRINGCON)
+    // "{ch}"
+    q0 -> q_str_open [label="\" (aspas)"];
+    q_str_open -> q_str_open [label="isprint() exceto \" e \\n"];
+    q_str_open -> STRINGCON [label="\" (aspas)"];
+
+    // 5. Operadores Relacionais e Atribuição
+    q0 -> ASSIGN [label="="];
+    ASSIGN -> EQ [label="="];
+    
+    q0 -> NOT [label="!"];
+    NOT -> NEQ [label="="];
+    
+    q0 -> LT [label="<"];
+    LT -> LE [label="="];
+    
+    q0 -> GT [label=">"];
+    GT -> GE [label="="];
+
+    // 6. Operadores Lógicos e Especiais
+    q0 -> AMP [label="&"];
+    AMP -> AND [label="&"];
+    
+    q0 -> q_pipe_open [label="|"];
+    q_pipe_open -> OR [label="|"]; // O pipe sozinho não é token válido na especificação
+
+    // 7. Operadores Aritméticos e Comentários
+    q0 -> PLUS [label="+"];
+    q0 -> MINUS [label="-"];
+    q0 -> STAR [label="*"];
+    
+    q0 -> q_slash_open [label="/"];
+    q_slash_open -> DIV [label="[outro] (retorna ao token)"]; // Simulação de fallback no código
+    
+    // Transição de Comentário
+    q_slash_open -> q_comment_body [label="/"];
+    q_comment_body -> q_comment_body [label="qualquer exceto \\n"];
+    q_comment_body -> COMMENT [label="\\n"];
+
+    // 8. Símbolos Delimitadores
+    q0 -> LPAREN [label="("];
+    q0 -> RPAREN [label=")"];
+    q0 -> LBRACK [label="["];
+    q0 -> RBRACK [label="]"];
+    q0 -> LBRACE [label="{"];
+    q0 -> RBRACE [label="}"];
+    q0 -> COMMA [label=","];
+}
