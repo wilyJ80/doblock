@@ -27,3 +27,9 @@
     - Returns result based on state signal
 
     - DFA traverses states via function pointers and updates the state signal
+
+- Lexer assignment
+
+    - Return tokens (categories and contents)
+
+    - Report lexer errors on lines

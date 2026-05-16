@@ -1,0 +1,29 @@
+#ifndef TOKEN_TYPE_H
+#define TOKEN_TYPE_H
+
+enum TOKEN_TYPE {
+	INTCON, REALCON,
+	ASSIGN, EQ,
+	NOT, NEQ,
+	ID,
+	LT, LE,
+	PLUS,
+	MINUS,
+	STAR,
+	GT, GE,
+	LPAREN,
+	RPAREN,
+	LBRACK,
+	RBRACK,
+	LBRACE,
+	RBRACE,
+	COMMA,
+	REF, AND,
+	CHARCON,
+	STRINGCON,
+	OR,
+	DIV
+	// comment: ignore
+};
+
+#endif

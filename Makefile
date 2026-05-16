@@ -1,39 +1,31 @@
 # Variables
 CC = gcc
-CFLAGS = -Wall -Isrc
+CFLAGS = -Wall -Isrc/lexer -Isrc
 SRC_DIR = src
 TEST_DIR = tests
-BIN_DIR = bin
 
-# Source files (excluding main for the test runner)
-SRCS = $(SRC_DIR)/utils.c
+# Source files
+SRCS = $(wildcard $(SRC_DIR)/lexer/*.c)
 MAIN = $(SRC_DIR)/main.c
-TESTS = $(TEST_DIR)/test_utils.c
+TESTS = $(TEST_DIR)/main.c
 
-# Targets
-APP_BIN = $(BIN_DIR)/app
-TEST_BIN = $(BIN_DIR)/test_runner
+# Output
+BIN = doblock
 
 .PHONY: all clean test
 
 # Default target: build the main application
-all: $(BIN_DIR) $(APP_BIN)
-
-# Create bin directory if it doesn't exist
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+all: $(BIN)
 
 # Build the main app
-$(APP_BIN): $(MAIN) $(SRCS)
+$(BIN): $(MAIN) $(SRCS)
 	$(CC) $(CFLAGS) $^ -o $@
 
-# Build and run tests
-test: $(BIN_DIR) $(TEST_BIN)
-	./$(TEST_BIN)
+# Build and run tests (overwrites the app binary)
+test: $(TESTS) $(SRCS)
+	$(CC) $(CFLAGS) $^ -o $(BIN)
+	./$(BIN)
 
-$(TEST_BIN): $(TESTS) $(SRCS)
-	$(CC) $(CFLAGS) $^ -o $@
-
-# Cleanup generated files
+# Cleanup
 clean:
-	rm -rf $(BIN_DIR)
+	rm -f $(BIN)
